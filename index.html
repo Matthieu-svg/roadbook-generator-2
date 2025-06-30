@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Roadbook KML → ORS (Version Pro avec Proxy)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --primary-color: #2196F3;
+      --primary-dark: #1976d2;
+      --success-color: #4CAF50;
+      --warning-color: #ff9800;
+      --error-color: #f44336;
+      --info-color: #03a9f4;
+    }
+    
+    * { box-sizing: border-box; }
+    
+    body { 
+      font-family: 'Segoe UI', Arial, sans-serif; 
+      background: #f0f2f5; 
+      margin: 0; 
+      padding: 20px; 
+      color: #333;
+    }
+    
+    .container { 
+      max-width: 1400px; 
+      margin: 0 auto; 
+      background: white; 
+      padding: 30px; 
+      border-radius: 12px; 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08); 
+    }
+    
+    h1 { 
+      color: #333; 
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .subtitle {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+    
+    .setup-box { 
+      background: linear-gradient(135deg, #e3f2fd 0%, #e8f4f8 100%);
+      padding: 25px; 
+      border-radius: 10px; 
+      margin-bottom: 25px;
+      border: 1px solid #bbdefb;
+    }
+    
+    .setup-box h2 { 
+      margin-top: 0; 
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .control-group {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .control-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .button { 
+      background: var(--primary-color); 
+      color: white; 
+      border: none; 
+      padding: 10px 20px; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      font-size: 15px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .button:hover { 
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+    }
+    
+    .button:disabled { 
+      background: #ccc; 
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .button.success { background: var(--success-color); }
+    .button.success:hover { background: #45a049; }
+    
+    .button.warning { background: var(--warning-color); }
+    .button.warning:hover { background: #f57c00; }
+    
+    .button.danger { background: var(--error-color); }
+    .button.danger:hover { background: #d32f2f; }
+    
+    .button.secondary { 
+      background: #f5f5f5; 
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    .button.secondary:hover { 
+      background: #e0e0e0;
+      border-color: #ccc;
+    }
+    
+    input[type="file"], 
+    input[type="password"], 
+    input[type="text"],
+    input[type="url"] { 
+      padding: 10px 15px; 
+      border: 2px solid #e0e0e0; 
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s ease;
+    }
+    
+    input[type="file"]:focus, 
+    input[type="password"]:focus,
+    input[type="text"]:focus,
+    input[type="url"]:focus { 
+      outline: none;
+      border-color: var(--primary-color);
+    }
+    
+    label {
+      font-weight: 600;
+      color: #555;
+      min-width: 120px;
+    }
+    
+    /* Indicateur de mode */
+    .mode-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .mode-proxy {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    
+    .mode-direct {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    
+    /* Switch pour basculer entre les modes */
+    .switch-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 28px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 28px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: var(--success-color);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(32px);
+    }
+    
+    /* Tableau amélioré */
+    .table-container {
+      overflow-x: auto;
+      margin-top: 25px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    table { 
+      width: 100%; 
+      border-collapse: collapse;
+      background: white;
+    }
+    
+    th { 
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      color: white; 
+      padding: 15px 12px; 
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    td { 
+      padding: 12px; 
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    tr:hover { 
+      background: #f8f9fa; 
+      cursor: pointer;
+    }
+    
+    tr.selected {
+      background: #e3f2fd;
+    }
+    
+    /* Colonnes du tableau */
+    .col-action { width: 80px; text-align: center; }
+    .col-number { width: 60px; text-align: center; font-weight: 600; }
+    .col-distance { width: 100px; }
+    .col-cumul { width: 100px; font-weight: 600; color: var(--primary-dark); }
+    .col-instruction { min-width: 250px; }
+    .col-road { min-width: 150px; }
+    .col-direction { width: 80px; text-align: center; }
+    .col-coords { width: 180px; font-family: monospace; font-size: 12px; }
+    .col-maps { width: 60px; text-align: center; }
+    
+    /* Boutons action */
+    .btn-remove {
+      background: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    
+    .btn-remove:hover {
+      background: #d32f2f;
+    }
+    
+    .btn-add {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    
+    .btn-add:hover {
+      background: #45a049;
+    }
+    
+    .btn-remove:disabled, .btn-add:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    /* Direction icons */
+    .direction-icon {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    
+    .direction-straight { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232196F3"><path d="M12 2l-5.5 9h3.5v11h4V11h3.5z"/></svg>'); }
+    .direction-left { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232196F3"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>'); }
+    .direction-right { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232196F3"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>'); }
+    .direction-slight-left { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234CAF50"><path d="M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z"/></svg>'); }
+    .direction-slight-right { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234CAF50"><path d="M12.33 20.13l1.77 1.77L24 12l-9.9-9.9-1.77 1.77L20.46 12z"/></svg>'); }
+    .direction-sharp-left { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f44336"><path d="M6 12l2-2v4H4v3l-4-4 4-4v3z"/></svg>'); }
+    .direction-sharp-right { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f44336"><path d="M18 12l-2 2v-4h4v-3l4 4-4 4v-3z"/></svg>'); }
+    .direction-roundabout { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff9800"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><circle cx="12" cy="12" r="3" fill="%23ff9800"/></svg>'); }
+    
+    /* Map */
+    #map { 
+      height: 500px; 
+      margin-top: 25px; 
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Status messages */
+    .status { 
+      padding: 12px 16px; 
+      margin: 10px 0; 
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+    
+    .success { 
+      background: #e8f5e9; 
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+    
+    .error { 
+      background: #ffebee; 
+      color: #c62828;
+      border: 1px solid #ef9a9a;
+    }
+    
+    .warning { 
+      background: #fff3e0; 
+      color: #e65100;
+      border: 1px solid #ffcc80;
+    }
+    
+    .info { 
+      background: #e3f2fd; 
+      color: #1565c0;
+      border: 1px solid #90caf9;
+    }
+    
+    /* Print styles */
+    @media print {
+      body { background: white; }
+      .container { box-shadow: none; padding: 20px; }
+      .control-group, .setup-box { display: none; }
+      .table-container { box-shadow: none; }
+      #map { page-break-after: always; }
+    }
+    
+    /* Menu contextuel */
+    #markerContextMenu {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 14px;
+    }
+    
+    /* Animation de suppression */
+    @keyframes fadeOut {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0; transform: scale(0.8); }
+    }
+    
+    .removing {
+      animation: fadeOut 0.3s ease-out;
+    }
+    
+    /* Progress bar */
+    .progress-container {
+      width: 100%;
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      transition: width 0.3s ease;
+    }
+    
+    /* Server status */
+    .server-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+    }
+    
+    .server-online {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    
+    .server-offline {
+      background: #ffebee;
+      color: #c62828;
+    }
+    
+    /* Google Maps specific styles */
+    .gm-style-iw-c {
+      padding: 12px !important;
+    }
+    
+    .gm-style-iw-d {
+      overflow: auto !important;
+    }
+    
+    /* Légende personnalisée pour Google Maps */
+    .map-legend {
+      background: white;
+      padding: 10px 15px;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      margin: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .map-legend h4 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+    }
+    
+    /* Contrôles de carte personnalisés */
+    .map-control {
+      background-color: #fff;
+      border: 2px solid #fff;
+      border-radius: 3px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+      cursor: pointer;
+      margin: 10px;
+      text-align: center;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .map-control:hover {
+      background-color: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🗺️ Générateur de Roadbook Professionnel 
+    <span class="mode-indicator mode-proxy" id="modeIndicator">🚀 Mode Proxy (Sans CORS)</span>
+  </h1>
+  <p class="subtitle">Conversion KML/KMZ vers roadbook détaillé avec OpenRouteService</p>
+  
+  <div class="setup-box">
+    <h2>⚡ Configuration</h2>
+    
+    <div class="control-row">
+      <label>Mode de connexion:</label>
+      <div class="switch-container">
+        <span>Direct (CORS requis)</span>
+        <label class="switch">
+          <input type="checkbox" id="proxyToggle" checked onchange="toggleProxyMode()">
+          <span class="slider"></span>
+        </label>
+        <span>Proxy (Recommandé)</span>
+      </div>
+      <span class="server-status" id="serverStatus"></span>
+    </div>
+    
+    <div class="control-row" id="proxyConfig" style="display: flex;">
+      <label>URL du proxy:</label>
+      <input type="url" id="proxyUrl" placeholder="http://localhost:3000" value="http://localhost:3000" style="width: 300px;">
+      <button class="button secondary" onclick="testProxyConnection()">🔌 Tester connexion</button>
+    </div>
+    
+    <div class="control-row" id="corsWarning" style="display: none;">
+      <div class="warning" style="flex: 1;">
+        ⚠️ Mode direct : Nécessite une extension CORS. 
+        <a href="https://chrome.google.com/webstore/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino" target="_blank">Chrome</a> |
+        <a href="https://addons.mozilla.org/fr/firefox/addon/cors-everywhere/" target="_blank">Firefox</a> |
+        <a href="https://microsoftedge.microsoft.com/addons/detail/allow-cors-accesscontro/bhjepjpgngghppolkjdhckmnfphffdag" target="_blank">Edge</a>
+      </div>
+    </div>
+    
+    <div class="control-row">
+      <label>Clé API ORS:</label>
+      <input type="password" id="apiKey" placeholder="Collez votre clé ici (optionnel avec proxy)" style="width: 300px;">
+      <button class="button secondary" onclick="toggleKey()">👁️</button>
+      <button class="button" onclick="testAPI()">🔌 Tester API</button>
+      <span id="testStatus"></span>
+    </div>
+    
+    <div class="control-row">
+      <label>Clé API Google Maps:</label>
+      <input type="password" id="googleApiKey" placeholder="Votre clé API Google Maps" style="width: 300px;">
+      <button class="button secondary" onclick="toggleGoogleKey()">👁️</button>
+      <small style="color: #666;">Requis pour afficher les cartes Google</small>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="control-row">
+      <label>Fichier KML/KMZ:</label>
+      <input type="file" id="fileInput" accept=".kml,.kmz">
+      <button class="button success" id="generateBtn" onclick="generateRoadbook()" disabled>
+        🚀 Générer le Roadbook
+      </button>
+      <span id="fileStatus"></span>
+    </div>
+    
+    <div class="control-row">
+      <label>Options:</label>
+      <button class="button warning" onclick="detectIntersections()" id="detectBtn" style="display: none;">
+        🎯 Détecter intersections
+      </button>
+      <button class="button secondary" onclick="toggleDetailedMode()">
+        📋 Mode détaillé
+      </button>
+      <button class="button secondary" onclick="toggleDebugMode()">
+        🐛 Debug
+      </button>
+    </div>
+  </div>
+
+  <div class="control-group" style="display: none;" id="exportControls">
+    <div class="control-row">
+      <label>Export:</label>
+      <button class="button" onclick="exportPDF()">📄 PDF</button>
+      <button class="button" onclick="exportExcel()">📊 Excel</button>
+      <button class="button" onclick="exportGPX()">📍 GPX</button>
+      <button class="button secondary" onclick="window.print()">🖨️ Imprimer</button>
+      <button class="button secondary" onclick="undoLastRemove()" id="undoBtn" style="display: none;">
+        ↩️ Annuler suppression
+      </button>
+    </div>
+  </div>
+
+  <div id="progressContainer" style="display: none;">
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+    </div>
+    <span id="progressText"></span>
+  </div>
+
+  <div class="table-container" id="tableContainer" style="display:none;">
+    <table id="roadbookTable">
+      <thead>
+        <tr>
+          <th class="col-action"></th>
+          <th class="col-number">N°</th>
+          <th class="col-distance">Distance</th>
+          <th class="col-cumul">Cumul km</th>
+          <th class="col-instruction">Instruction</th>
+          <th class="col-road">Route/Rue</th>
+          <th class="col-direction">Direction</th>
+          <th class="col-coords">Coordonnées GPS</th>
+          <th class="col-maps">Vue</th>
+        </tr>
+      </thead>
+      <tbody id="roadbookBody"></tbody>
+    </table>
+  </div>
+
+  <div id="map" style="display:none;"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// Variables globales
+let points = [];
+let roadbookData = [];
+let allInstructionsData = [];
+let removedInstructions = [];
+let map = null;
+let routeLayer = null;
+let selectedRow = null;
+let debugMode = false;
+let detailedMode = false;
+let useProxy = true;
+
+// Variables Google Maps
+let googlePolyline = null;
+let googleMarkers = [];
+let googleInfoWindows = [];
+
+// Configuration API
+const API_CONFIG = {
+  baseUrl: 'https://api.openrouteservice.org/v2/directions/',
+  proxyUrl: 'http://localhost:3000/api/ors/',
+  profile: 'driving-car',
+  maxPointsPerRequest: 50,
+  maxDistancePerRequest: 140000,
+  retryDelay: 3000,
+  maxRetries: 3
+};
+
+// ============================================
+// FONCTIONS UTILITAIRES DE BASE
+// ============================================
+
+function showStatus(elementId, message, type) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.innerHTML = `<span class="status ${type}">${message}</span>`;
+  }
+}
+
+function showProgress(show) {
+  const container = document.getElementById('progressContainer');
+  if (container) {
+    container.style.display = show ? 'block' : 'none';
+  }
+}
+
+function updateProgress(percentage, text) {
+  const bar = document.getElementById('progressBar');
+  const textEl = document.getElementById('progressText');
+  
+  if (bar && percentage !== null) {
+    bar.style.width = `${percentage}%`;
+  }
+  if (textEl) {
+    textEl.textContent = text || '';
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function download(filename, content, mimeType = 'text/plain') {
+  const blob = new Blob([content], { type: mimeType + ';charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function escapeXml(str) {
+  return str.replace(/[&<>"']/g, (match) => {
+    const escapeMap = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return escapeMap[match];
+  });
+}
+
+// ============================================
+// FONCTIONS DE CONFIGURATION
+// ============================================
+
+function toggleProxyMode() {
+  useProxy = document.getElementById('proxyToggle').checked;
+  localStorage.setItem('useProxy', useProxy);
+  
+  const proxyConfig = document.getElementById('proxyConfig');
+  const corsWarning = document.getElementById('corsWarning');
+  const modeIndicator = document.getElementById('modeIndicator');
+  const apiKeyInput = document.getElementById('apiKey');
+  
+  if (useProxy) {
+    proxyConfig.style.display = 'flex';
+    corsWarning.style.display = 'none';
+    modeIndicator.className = 'mode-indicator mode-proxy';
+    modeIndicator.textContent = '🚀 Mode Proxy (Sans CORS)';
+    apiKeyInput.placeholder = 'Collez votre clé ici (optionnel avec proxy)';
+  } else {
+    proxyConfig.style.display = 'none';
+    corsWarning.style.display = 'block';
+    modeIndicator.className = 'mode-indicator mode-direct';
+    modeIndicator.textContent = '⚠️ Mode Direct (CORS requis)';
+    apiKeyInput.placeholder = 'Collez votre clé ici (obligatoire)';
+  }
+}
+
+function toggleKey() {
+  const input = document.getElementById('apiKey');
+  if (input) {
+    input.type = input.type === 'password' ? 'text' : 'password';
+  }
+}
+
+function toggleGoogleKey() {
+  const input = document.getElementById('googleApiKey');
+  if (input) {
+    input.type = input.type === 'password' ? 'text' : 'password';
+  }
+}
+
+function loadGoogleMaps() {
+  const apiKey = document.getElementById('googleApiKey').value.trim();
+  if (!apiKey) {
+    showStatus('fileStatus', '⚠️ Clé API Google Maps requise pour afficher les cartes', 'warning');
+    return;
+  }
+  
+  if (window.google && window.google.maps) {
+    return;
+  }
+  
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry`;
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+}
+
+// ============================================
+// FONCTIONS DE TEST API
+// ============================================
+
+async function testProxyConnection() {
+  const proxyUrl = document.getElementById('proxyUrl').value.trim();
+  if (!proxyUrl) {
+    showServerStatus('offline', 'URL proxy manquante');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${proxyUrl}/api/health`);
+    if (response.ok) {
+      const data = await response.json();
+      showServerStatus('online', `Proxy OK ${data.hasApiKey ? '(API configurée)' : '(API non configurée)'}`);
+      
+      localStorage.setItem('proxyUrl', proxyUrl);
+      API_CONFIG.proxyUrl = proxyUrl + '/api/ors/';
+      
+      if (data.hasApiKey) {
+        document.getElementById('generateBtn').disabled = false;
+      }
+    } else {
+      showServerStatus('offline', 'Serveur proxy inaccessible');
+    }
+  } catch (error) {
+    showServerStatus('offline', 'Serveur proxy hors ligne');
+    console.error('Erreur connexion proxy:', error);
+  }
+}
+
+function showServerStatus(status, message) {
+  const statusEl = document.getElementById('serverStatus');
+  if (statusEl) {
+    if (status === 'online') {
+      statusEl.className = 'server-status server-online';
+      statusEl.innerHTML = `🟢 ${message}`;
+    } else {
+      statusEl.className = 'server-status server-offline';
+      statusEl.innerHTML = `🔴 ${message}`;
+    }
+  }
+}
+
+async function testAPI() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  
+  if (!useProxy && !apiKey) {
+    showStatus('testStatus', '❌ Clé API requise en mode direct', 'error');
+    return;
+  }
+  
+  showStatus('testStatus', '⏳ Test en cours...', 'info');
+  
+  try {
+    let response;
+    
+    if (useProxy) {
+      const proxyUrl = document.getElementById('proxyUrl').value.trim();
+      response = await fetch(`${proxyUrl}/api/test-api-key`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey })
+      });
+    } else {
+      response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.profile}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json, application/geo+json'
+        },
+        body: JSON.stringify({
+          coordinates: [[2.3522, 48.8566], [2.295, 48.8738]],
+          instructions: true,
+          language: 'fr'
+        })
+      });
+    }
+    
+    if (response.ok) {
+      showStatus('testStatus', '✅ Connexion réussie!', 'success');
+      document.getElementById('generateBtn').disabled = false;
+    } else {
+      showStatus('testStatus', '❌ Clé invalide ou erreur API', 'error');
+    }
+  } catch (error) {
+    showStatus('testStatus', `❌ Erreur: ${useProxy ? 'Vérifiez le serveur proxy' : 'Vérifiez l\'extension CORS'}`, 'error');
+    console.error('Test error:', error);
+  }
+}
+
+// ============================================
+// FONCTIONS D'APPEL API
+// ============================================
+
+async function callORS(profile, data, format = null) {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  let url, options;
+  
+  if (useProxy) {
+    const proxyUrl = document.getElementById('proxyUrl').value.trim();
+    url = format ? 
+      `${proxyUrl}/api/ors/${profile}/${format}` : 
+      `${proxyUrl}/api/ors/${profile}`;
+    
+    options = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...data, apiKey })
+    };
+  } else {
+    if (!apiKey) {
+      throw new Error('Clé API requise en mode direct');
+    }
+    
+    url = format ? 
+      `${API_CONFIG.baseUrl}${profile}/${format}` : 
+      `${API_CONFIG.baseUrl}${profile}`;
+    
+    options = {
+      method: 'POST',
+      headers: {
+        'Authorization': apiKey,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json, application/geo+json'
+      },
+      body: JSON.stringify(data)
+    };
+  }
+  
+  const response = await fetch(url, options);
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`API Error: ${response.status} - ${error}`);
+  }
+  
+  return response.json();
+}
+
+// ============================================
+// GESTION DES FICHIERS
+// ============================================
+
+document.getElementById('fileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const fileName = file.name.toLowerCase();
+  if (fileName.endsWith('.kmz')) {
+    await handleKMZ(file);
+  } else if (fileName.endsWith('.kml')) {
+    await handleKML(file);
+  } else {
+    showStatus('fileStatus', '❌ Format non supporté', 'error');
+  }
+});
+
+async function handleKMZ(file) {
+  try {
+    const zip = await JSZip.loadAsync(file);
+    let kmlFound = false;
+    
+    for (const [filename, fileData] of Object.entries(zip.files)) {
+      if (filename.toLowerCase().endsWith('.kml')) {
+        const kmlContent = await fileData.async('string');
+        parseKML(kmlContent);
+        kmlFound = true;
+        break;
+      }
+    }
+    
+    if (!kmlFound) {
+      showStatus('fileStatus', '❌ Aucun fichier KML dans le KMZ', 'error');
+    }
+  } catch (error) {
+    showStatus('fileStatus', '❌ Erreur lecture KMZ', 'error');
+    console.error('KMZ error:', error);
+  }
+}
+
+async function handleKML(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => parseKML(e.target.result);
+  reader.readAsText(file);
+}
+
+function parseKML(kmlText) {
+  const parser = new DOMParser();
+  const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+  points = [];
+  let isLineString = false;
+  let fullTrace = [];
+  
+  const placemarkPoints = [];
+  kmlDoc.querySelectorAll('Placemark').forEach(placemark => {
+    const name = placemark.querySelector('name')?.textContent || '';
+    const coords = placemark.querySelector('Point > coordinates')?.textContent;
+    if (coords) {
+      const [lon, lat] = coords.trim().split(',').map(Number);
+      if (isFinite(lat) && isFinite(lon)) {
+        placemarkPoints.push({ name, lat, lon, isWaypoint: true });
+      }
+    }
+  });
+  
+  const lineStrings = kmlDoc.querySelectorAll('LineString > coordinates');
+  if (lineStrings.length > 0) {
+    isLineString = true;
+    lineStrings.forEach(lineString => {
+      const coordsText = lineString.textContent.trim();
+      coordsText.split(/\s+/).forEach((coord, idx) => {
+        const parts = coord.split(',');
+        if (parts.length >= 2) {
+          const lon = parseFloat(parts[0]);
+          const lat = parseFloat(parts[1]);
+          if (isFinite(lat) && isFinite(lon)) {
+            fullTrace.push({ 
+              name: `Point ${idx + 1}`, 
+              lat, 
+              lon,
+              isTrace: true
+            });
+          }
+        }
+      });
+    });
+  }
+  
+  if (isLineString && fullTrace.length > 50) {
+    console.log(`🗺️ Tracé détecté avec ${fullTrace.length} points`);
+    
+    window.fullKMLTrace = fullTrace;
+    
+    points = [
+      { ...fullTrace[0], name: 'Départ' },
+      { ...fullTrace[fullTrace.length - 1], name: 'Arrivée' }
+    ];
+    
+    if (placemarkPoints.length > 0) {
+      console.log(`📍 ${placemarkPoints.length} waypoints ajoutés`);
+      points = [
+        points[0],
+        ...placemarkPoints,
+        points[1]
+      ];
+    }
+    
+    showStatus('fileStatus', 
+      `✅ Tracé KML détecté (${fullTrace.length} points). Mode routage: ${points.length} points clés`, 
+      'info'
+    );
+    
+    showTraceOptions();
+    
+  } else if (placemarkPoints.length > 0) {
+    points = placemarkPoints;
+    showStatus('fileStatus', `✅ ${points.length} waypoints trouvés`, 'success');
+  } else if (fullTrace.length > 0) {
+    points = fullTrace;
+    window.fullKMLTrace = fullTrace;
+    showStatus('fileStatus', `✅ ${points.length} points trouvés`, 'success');
+  }
+  
+  if (points.length >= 2) {
+    document.getElementById('detectBtn').style.display = 'inline-block';
+    
+    if (debugMode || window.fullKMLTrace) {
+      displayDebugMap();
+    }
+  } else {
+    showStatus('fileStatus', '❌ Pas assez de points (minimum 2)', 'error');
+  }
+  
+  loadGoogleMaps();
+}
+
+function showTraceOptions() {
+  const existingOptions = document.getElementById('traceOptions');
+  if (existingOptions) {
+    existingOptions.remove();
+  }
+  
+  const optionsDiv = document.createElement('div');
+  optionsDiv.id = 'traceOptions';
+  optionsDiv.className = 'control-row';
+  optionsDiv.style.marginTop = '10px';
+  optionsDiv.innerHTML = `
+    <label>Options tracé:</label>
+    <button class="button success" onclick="extractKeyPoints()">
+      ✨ Extraire points clés du tracé
+    </button>
+    <button class="button warning" onclick="useSimpleRoute()">
+      🎯 Route directe (début→fin)
+    </button>
+    <button class="button secondary" onclick="simplifyTrace()">
+      🔧 Simplifier (1 point/${Math.ceil(window.fullKMLTrace.length / 30)})
+    </button>
+  `;
+  
+  document.getElementById('fileStatus').parentElement.appendChild(optionsDiv);
+}
+
+// ============================================
+// GESTION DES POINTS
+// ============================================
+
+function extractKeyPoints() {
+  if (!window.fullKMLTrace || window.fullKMLTrace.length < 3) return;
+  
+  showStatus('fileStatus', '✨ Extraction des points clés du tracé...', 'info');
+  
+  const keyPoints = [window.fullKMLTrace[0]];
+  const angleThreshold = 15;
+  const minDistance = 100;
+  
+  let lastKeyPoint = window.fullKMLTrace[0];
+  
+  for (let i = 1; i < window.fullKMLTrace.length - 1; i++) {
+    const prev = window.fullKMLTrace[i - 1];
+    const current = window.fullKMLTrace[i];
+    const next = window.fullKMLTrace[i + 1];
+    
+    const distFromLast = calculateDistance(lastKeyPoint, current);
+    const angle = calculateAngleChange(prev, current, next);
+    
+    if (angle > angleThreshold && distFromLast > minDistance) {
+      keyPoints.push({
+        ...current,
+        name: `Virage ${keyPoints.length}`,
+        angle: angle
+      });
+      lastKeyPoint = current;
+    }
+  }
+  
+  keyPoints.push({
+    ...window.fullKMLTrace[window.fullKMLTrace.length - 1],
+    name: 'Arrivée'
+  });
+  
+  if (keyPoints.length > 50) {
+    points = filterKeyPointsByImportance(keyPoints, 50);
+  } else {
+    points = keyPoints;
+  }
+  
+  showStatus('fileStatus', 
+    `✅ ${points.length} points clés extraits du tracé (virages et intersections)`, 
+    'success'
+  );
+  
+  displayDebugMap();
+}
+
+function calculateAngleChange(p1, p2, p3) {
+  const v1 = {
+    x: p2.lon - p1.lon,
+    y: p2.lat - p1.lat
+  };
+  const v2 = {
+    x: p3.lon - p2.lon,
+    y: p3.lat - p2.lat
+  };
+  
+  const angle1 = Math.atan2(v1.y, v1.x);
+  const angle2 = Math.atan2(v2.y, v2.x);
+  
+  let angle = Math.abs(angle2 - angle1) * 180 / Math.PI;
+  
+  if (angle > 180) angle = 360 - angle;
+  
+  return angle;
+}
+
+function filterKeyPointsByImportance(keyPoints, maxPoints) {
+  const filtered = [keyPoints[0]];
+  
+  const intermediatePoints = keyPoints.slice(1, -1).sort((a, b) => b.angle - a.angle);
+  const selectedPoints = intermediatePoints.slice(0, maxPoints - 2);
+  
+  selectedPoints.forEach(point => {
+    const originalIndex = window.fullKMLTrace.findIndex(p => 
+      p.lat === point.lat && p.lon === point.lon
+    );
+    point.originalIndex = originalIndex;
+  });
+  
+  selectedPoints.sort((a, b) => a.originalIndex - b.originalIndex);
+  
+  filtered.push(...selectedPoints);
+  filtered.push(keyPoints[keyPoints.length - 1]);
+  
+  return filtered;
+}
+
+function useSimpleRoute() {
+  if (window.fullKMLTrace) {
+    points = [
+      { ...window.fullKMLTrace[0], name: 'Départ' },
+      { ...window.fullKMLTrace[window.fullKMLTrace.length - 1], name: 'Arrivée' }
+    ];
+    showStatus('fileStatus', '✅ Mode route directe: début → fin', 'success');
+    displayDebugMap();
+  }
+}
+
+function simplifyTrace() {
+  if (window.fullKMLTrace) {
+    const step = Math.ceil(window.fullKMLTrace.length / 30);
+    points = [window.fullKMLTrace[0]];
+    
+    for (let i = step; i < window.fullKMLTrace.length - 1; i += step) {
+      points.push(window.fullKMLTrace[i]);
+    }
+    
+    points.push(window.fullKMLTrace[window.fullKMLTrace.length - 1]);
+    
+    showStatus('fileStatus', `✅ Tracé simplifié: ${points.length} points clés sur ${window.fullKMLTrace.length}`, 'success');
+    displayDebugMap();
+  }
+}
+
+// ============================================
+// GÉNÉRATION DU ROADBOOK
+// ============================================
+
+async function generateRoadbook() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  
+  if (!useProxy && !apiKey) {
+    showStatus('fileStatus', '❌ Clé API requise en mode direct', 'error');
+    return;
+  }
+  
+  if (points.length < 2) {
+    showStatus('fileStatus', '❌ Pas assez de points', 'error');
+    return;
+  }
+  
+  showProgress(true);
+  updateProgress(0, 'Initialisation...');
+  
+  roadbookData = [];
+  
+  try {
+    let totalDistance = 0;
+    for (let i = 1; i < points.length; i++) {
+      totalDistance += calculateDistance(points[i-1], points[i]);
+    }
+    
+    console.log(`📏 Distance totale: ${(totalDistance/1000).toFixed(1)} km, ${points.length} points`);
+    
+    const segments = createOptimalSegments(points, totalDistance);
+    console.log(`📦 ${segments.length} segments créés`);
+    
+    let processedSegments = 0;
+    let cumulativeDistance = 0;
+    let allInstructions = [];
+    
+    for (const segment of segments) {
+      updateProgress(
+        (processedSegments / segments.length) * 100,
+        `Traitement segment ${processedSegments + 1}/${segments.length}...`
+      );
+      
+      const segmentData = await processSegment(segment, cumulativeDistance);
+      if (segmentData) {
+        allInstructions.push(...segmentData.instructions);
+        cumulativeDistance = segmentData.lastCumulDistance;
+      }
+      
+      processedSegments++;
+      
+      if (processedSegments < segments.length) {
+        await sleep(1000);
+      }
+    }
+    
+    allInstructionsData = allInstructions;
+    
+    if (!detailedMode) {
+      roadbookData = filterRedundantInstructions(allInstructions);
+    } else {
+      roadbookData = allInstructions;
+    }
+    
+    if (roadbookData.length > 0) {
+      displayRoadbook();
+      displayMap();
+      document.getElementById('exportControls').style.display = 'block';
+      showStatus('fileStatus', `✅ Roadbook généré: ${roadbookData.length} instructions`, 'success');
+    } else {
+      showStatus('fileStatus', '❌ Aucune instruction générée', 'error');
+    }
+    
+  } catch (error) {
+    console.error('Generation error:', error);
+    showStatus('fileStatus', `❌ Erreur: ${error.message}`, 'error');
+  } finally {
+    showProgress(false);
+  }
+}
+
+function createOptimalSegments(points, totalDistance) {
+  const segments = [];
+  
+  if (points.length <= 50 && totalDistance < 140000) {
+    return [points];
+  }
+  
+  const maxPoints = 40;
+  const maxDistance = 100000;
+  
+  let currentSegment = [points[0]];
+  let segmentDistance = 0;
+  
+  for (let i = 1; i < points.length; i++) {
+    const dist = calculateDistance(points[i-1], points[i]);
+    
+    if (currentSegment.length >= maxPoints || segmentDistance + dist > maxDistance) {
+      if (currentSegment.length >= 2) {
+        segments.push([...currentSegment]);
+        currentSegment = [currentSegment[currentSegment.length - 1]];
+        segmentDistance = 0;
+      }
+    }
+    
+    currentSegment.push(points[i]);
+    segmentDistance += dist;
+  }
+  
+  if (currentSegment.length >= 2) {
+    segments.push(currentSegment);
+  }
+  
+  return segments;
+}
+
+async function processSegment(segment, startCumulDistance) {
+  const coordinates = segment.map(p => [p.lon, p.lat]);
+  
+  for (let retry = 0; retry < API_CONFIG.maxRetries; retry++) {
+    try {
+      const data = await callORS(API_CONFIG.profile, {
+        coordinates: coordinates,
+        instructions: true,
+        language: 'fr',
+        instructions_format: 'text',
+        continue_straight: true,
+        geometry: true,
+        preference: 'recommended',
+        units: 'km',
+        geometry_simplify: false
+      }, 'geojson');
+      
+      return parseORSResponse(data, segment, startCumulDistance);
+      
+    } catch (error) {
+      console.error('Segment processing error:', error);
+      
+      if (error.message.includes('429')) {
+        const waitTime = Math.min(60 * (retry + 1), 300);
+        updateProgress(null, `⏳ Limite API atteinte. Attente ${waitTime}s...`);
+        await sleep(waitTime * 1000);
+        continue;
+      }
+      
+      if (retry < API_CONFIG.maxRetries - 1) {
+        await sleep(API_CONFIG.retryDelay);
+      } else {
+        throw error;
+      }
+    }
+  }
+  
+  return null;
+}
+
+function parseORSResponse(data, segmentPoints, startCumulDistance) {
+  const instructions = [];
+  let cumulDistance = startCumulDistance;
+  
+  if (data.features && data.features[0]) {
+    const feature = data.features[0];
+    const geometry = feature.geometry;
+    const properties = feature.properties;
+    
+    if (properties.segments) {
+      properties.segments.forEach(segment => {
+        segment.steps.forEach((step, stepIdx) => {
+          if (step.type === 10 && stepIdx < segment.steps.length - 1) {
+            return;
+          }
+          
+          cumulDistance += step.distance;
+          
+          let lat, lon;
+          if (geometry && geometry.coordinates && step.way_points) {
+            const wpIdx = step.way_points[0];
+            if (geometry.coordinates[wpIdx]) {
+              [lon, lat] = geometry.coordinates[wpIdx];
+            }
+          }
+          
+          if (!lat || !lon) {
+            const progress = cumulDistance / (properties.summary.distance + startCumulDistance);
+            const idx = Math.min(
+              Math.floor(progress * (segmentPoints.length - 1)),
+              segmentPoints.length - 1
+            );
+            lat = segmentPoints[idx].lat;
+            lon = segmentPoints[idx].lon;
+          }
+          
+          instructions.push({
+            index: roadbookData.length + instructions.length + 1,
+            distance: step.distance,
+            cumDistance: cumulDistance,
+            instruction: step.instruction,
+            road: normalizeRoadName(step.name) || '',
+            type: step.type,
+            lat: lat || 0,
+            lon: lon || 0,
+            maneuver: step.maneuver || {}
+          });
+        });
+      });
+    }
+  }
+  
+  return {
+    instructions,
+    lastCumulDistance: cumulDistance
+  };
+}
+
+// ============================================
+// AFFICHAGE DU ROADBOOK
+// ============================================
+
+function displayRoadbook() {
+  const tbody = document.getElementById('roadbookBody');
+  tbody.innerHTML = '';
+  
+  roadbookData.forEach((step, idx) => {
+    const tr = document.createElement('tr');
+    tr.className = 'roadbook-row';
+    tr.dataset.index = idx;
+    
+    const directionIcon = getDirectionIcon(step.type);
+    const coords = step.lat && step.lon ? 
+      `${step.lat.toFixed(6)}, ${step.lon.toFixed(6)}` : 
+      'N/A';
+    
+    const mapsLink = step.lat && step.lon ? 
+      `<a href="https://www.google.com/maps/place/${step.lat},${step.lon}/@${step.lat},${step.lon},17z" target="_blank" title="Vue satellite">🛰️</a>` : 
+      '';
+    
+    const removeBtn = idx === 0 ? 
+      `<button class="btn-remove" disabled title="Impossible de supprimer le départ">-</button>` :
+      `<button class="btn-remove" onclick="removeInstruction(${idx})" title="Supprimer cette instruction">-</button>`;
+    
+    const addBtn = idx < roadbookData.length - 1 ?
+      `<button class="btn-add" onclick="addInstruction(${idx})" title="Ajouter une étape après">+</button>` :
+      '';
+    
+    tr.innerHTML = `
+      <td class="col-action">
+        ${removeBtn}
+        ${addBtn}
+      </td>
+      <td class="col-number">${step.index}</td>
+      <td class="col-distance">${step.distance.toFixed(2)} km</td>
+      <td class="col-cumul">${step.cumDistance.toFixed(1)}</td>
+      <td class="col-instruction">${step.instruction}</td>
+      <td class="col-road">${step.road}</td>
+      <td class="col-direction"><span class="direction-icon ${directionIcon}"></span></td>
+      <td class="col-coords">${coords}</td>
+      <td class="col-maps">${mapsLink}</td>
+    `;
+    
+    tr.onclick = (e) => {
+      if (!e.target.classList.contains('btn-remove') && !e.target.classList.contains('btn-add')) {
+        selectRow(idx);
+      }
+    };
+    tbody.appendChild(tr);
+  });
+  
+  document.getElementById('tableContainer').style.display = 'block';
+}
+
+function selectRow(index) {
+  document.querySelectorAll('.roadbook-row').forEach(row => {
+    row.classList.remove('selected');
+  });
+  
+  const row = document.querySelector(`[data-index="${index}"]`);
+  if (row) {
+    row.classList.add('selected');
+    selectedRow = index;
+    
+    const step = roadbookData[index];
+    if (step.lat && step.lon && map) {
+      map.setCenter({ lat: step.lat, lng: step.lon });
+      map.setZoom(16);
+      
+      if (googleMarkers[index] && googleInfoWindows[index]) {
+        googleInfoWindows.forEach(iw => iw.close());
+        googleInfoWindows[index].open(map, googleMarkers[index]);
+      }
+    }
+  }
+}
+
+// ============================================
+// CARTE GOOGLE MAPS
+// ============================================
+
+function displayMap() {
+  document.getElementById('map').style.display = 'block';
+  
+  if (!window.google || !window.google.maps) {
+    showStatus('fileStatus', '⚠️ Google Maps non chargé. Vérifiez votre clé API', 'warning');
+    return;
+  }
+  
+  if (googlePolyline) {
+    googlePolyline.setMap(null);
+  }
+  googleMarkers.forEach(marker => marker.setMap(null));
+  googleInfoWindows.forEach(iw => iw.close());
+  googleMarkers = [];
+  googleInfoWindows = [];
+  
+  if (!map) {
+    map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 10,
+      center: { lat: 48.8566, lng: 2.3522 },
+      mapTypeId: 'roadmap',
+      mapTypeControl: true,
+      mapTypeControlOptions: {
+        style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+        position: google.maps.ControlPosition.TOP_RIGHT,
+        mapTypeIds: ['roadmap', 'satellite', 'terrain']
+      },
+      streetViewControl: true,
+      fullscreenControl: true,
+      zoomControl: true,
+      scaleControl: true
+    });
+  }
+  
+  const routeCoords = [];
+  roadbookData.forEach(step => {
+    if (step.lat && step.lon) {
+      routeCoords.push({ lat: step.lat, lng: step.lon });
+    }
+  });
+  
+  if (routeCoords.length > 1) {
+    googlePolyline = new google.maps.Polyline({
+      path: routeCoords,
+      geodesic: true,
+      strokeColor: '#2196F3',
+      strokeOpacity: 0.8,
+      strokeWeight: 4
+    });
+    googlePolyline.setMap(map);
+    
+    const bounds = new google.maps.LatLngBounds();
+    routeCoords.forEach(coord => bounds.extend(coord));
+    map.fitBounds(bounds);
+  }
+  
+  roadbookData.forEach((step, idx) => {
+    if (step.lat && step.lon) {
+      const isStart = idx === 0;
+      const isEnd = idx === roadbookData.length - 1;
+      
+      const marker = new google.maps.Marker({
+        position: { lat: step.lat, lng: step.lon },
+        map: map,
+        title: `${step.index}. ${step.instruction}`,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: isStart || isEnd ? 10 : 6,
+          fillColor: isStart ? '#4CAF50' : isEnd ? '#f44336' : '#2196F3',
+          fillOpacity: 0.9,
+          strokeColor: 'white',
+          strokeWeight: 2
+        }
+      });
+      
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="padding: 5px;">
+            <strong>${step.index}. ${step.instruction}</strong><br>
+            ${step.road ? `Route: ${step.road}<br>` : ''}
+            Distance: ${step.distance.toFixed(2)} km<br>
+            Total: ${step.cumDistance.toFixed(1)} km
+          </div>
+        `
+      });
+      
+      marker.addListener('click', () => {
+        googleInfoWindows.forEach(iw => iw.close());
+        infoWindow.open(map, marker);
+        selectRow(idx);
+      });
+      
+      if (!isStart) {
+        marker.addListener('rightclick', (e) => {
+          showMarkerContextMenuGoogle(e, idx, marker);
+        });
+      }
+      
+      googleMarkers.push(marker);
+      googleInfoWindows.push(infoWindow);
+    }
+  });
+  
+  const legend = document.createElement('div');
+  legend.className = 'map-legend';
+  legend.innerHTML = `
+    <h4>Contrôles carte</h4>
+    <span style="color:#4CAF50;">●</span> Départ<br>
+    <span style="color:#f44336;">●</span> Arrivée<br>
+    <span style="color:#2196F3;">●</span> Étape<br>
+    <small><em>Clic droit sur un point pour supprimer</em></small>
+  `;
+  map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(legend);
+}
+
+function displayDebugMap() {
+  document.getElementById('map').style.display = 'block';
+  
+  if (!window.google || !window.google.maps) {
+    showStatus('fileStatus', '⚠️ Google Maps non chargé. Vérifiez votre clé API', 'warning');
+    return;
+  }
+  
+  const centerLat = points.reduce((sum, p) => sum + p.lat, 0) / points.length;
+  const centerLon = points.reduce((sum, p) => sum + p.lon, 0) / points.length;
+  
+  if (!map) {
+    map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 10,
+      center: { lat: centerLat, lng: centerLon },
+      mapTypeId: 'roadmap',
+      mapTypeControl: true,
+      mapTypeControlOptions: {
+        style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+        position: google.maps.ControlPosition.TOP_RIGHT,
+        mapTypeIds: ['roadmap', 'satellite', 'terrain']
+      }
+    });
+  } else {
+    map.setCenter({ lat: centerLat, lng: centerLon });
+  }
+  
+  if (googlePolyline) googlePolyline.setMap(null);
+  googleMarkers.forEach(marker => marker.setMap(null));
+  googleMarkers = [];
+  
+  const bounds = new google.maps.LatLngBounds();
+  
+  if (window.fullKMLTrace && window.fullKMLTrace.length > 1) {
+    const tracePath = window.fullKMLTrace.map(p => ({ lat: p.lat, lng: p.lon }));
+    
+    const kmlPolyline = new google.maps.Polyline({
+      path: tracePath,
+      
